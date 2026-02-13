@@ -1,0 +1,162 @@
+name: Full Auto Deploy (Terraform + Ansible)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tf_action:
+        description: "Terraform action"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+        default: apply
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_IN_AUTOMATION: true
+      TF_INPUT: false
+      TF_VAR_ami_id: ${{ secrets.AMI_ID }}
+      TF_VAR_key_name: ${{ secrets.KEY_NAME }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: generate variable.tfvars
+      working-directory: terraform
+      run: |
+        cat <<EOF > terraform.tfvars
+        ami   = "${{ secrets.TF_VAR_AMI_ID }}"
+        key_name = "${{ secrets.TF_VAR_KEY_NAME }}"
+        db_name   = "${{ secrets.TF_VAR_db_name }}"
+        db_user   = "${{ secrets.TF_VAR_db_user }}"
+        db_password   = "${{ secrets.TF_VAR_db_password }}"
+        EOF
+
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+
+    - name: Terraform validate
+      working-directory: terraform
+      run: terraform validate
+      
+    - name: Terraform plan
+      working-directory: terraform
+      run: terraform plan
+
+    - name: Terraform Apply
+      if: github.event.inputs.tf_action == 'apply'
+      working-directory: terraform
+      run: terraform apply -auto-approve
+
+    - name: Terraform Destroy
+      if: github.event.inputs.tf_action == 'destroy'
+      working-directory: terraform
+      run: terraform destroy -auto-approve
+
+    # =========================
+    # 2. INSTALL DEPENDENCIES
+    # =========================
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq unzip
+
+        # Install Ansible only if not installed
+        if ! command -v ansible &> /dev/null
+        then
+          echo "Installing Ansible..."
+          python -m pip install --upgrade pip
+          pip install ansible
+        else
+          echo "Ansible already installed"
+        fi
+
+    # =========================
+    # 3. VERIFY ANSIBLE
+    # =========================
+    - name: Check Ansible Version
+      run: ansible --version
+
+    # =========================
+    # 6. GET IPS FROM TERRAFORM
+    # =========================
+    - name: Get Terraform Outputs
+      working-directory: terraform
+      run: |
+        echo "NGINX_IP=$(terraform output -raw nginx_ip)" >> $GITHUB_ENV
+        echo "APP_IP=$(terraform output -raw app_ip)" >> $GITHUB_ENV
+        echo "POSTGRES_IP=$(terraform output -raw postgres_ip)" >> $GITHUB_ENV
+
+    # =========================
+    # 7. SETUP SSH KEY
+    # =========================
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/ec2.pem
+        chmod 400 ~/.ssh/ec2.pem
+
+    # =========================
+    # 8. GENERATE INVENTORY
+    # =========================
+    - name: Generate Ansible Inventory
+      run: |
+        mkdir -p ansible
+        cd ansible
+
+        echo "[app]" > inventory.ini
+        echo "$APP_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+        echo "" >> inventory.ini
+
+        echo "[nginx]" >> inventory.ini
+        echo "$NGINX_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+        echo "" >> inventory.ini
+
+        echo "[postgres]" >> inventory.ini
+        echo "$POSTGRES_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+        echo "========== INVENTORY =========="
+        cat inventory.ini
+
+    # =========================
+    # 9. WAIT FOR SSH (IMPORTANT)
+    # =========================
+    - name: Wait for Instances (SSH Ready)
+      run: |
+        echo "Waiting for servers to be ready..."
+        sleep 60
+
+    # =========================
+    # 10. TEST CONNECTIVITY
+    # =========================
+    - name: Test Ansible Connectivity
+      run: |
+        cd ansible
+        ansible all -i inventory.ini -m ping
+
+    # =========================
+    # 11. RUN PLAYBOOK
+    # =========================
+    - name: Run Ansible Playbook
+      run: |
+        cd ansible
+        ansible-playbook -i inventory.ini playbooks/site.yml

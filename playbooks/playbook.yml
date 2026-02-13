@@ -1,0 +1,11 @@
+- name: Configure Nginx Reverse Proxy
+  hosts: nginx
+  become: true
+  roles:
+    - nginx
+
+- name: Configure FastAPI App Node
+  hosts: app
+  become: true
+  roles:
+    - app
