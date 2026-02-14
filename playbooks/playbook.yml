@@ -1,11 +1,8 @@
-- name: Configure Nginx Reverse Proxy
-  hosts: nginx
-  become: true
-  roles:
-    - nginx
+- name: Deploy App + Nginx
+  hosts: all
+  become: yes
 
-- name: Configure FastAPI App Node
-  hosts: app
-  become: true
   roles:
+    - hardening
+    - nginx
     - app

@@ -1,0 +1,82 @@
+name: Secure Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 🔐 Security Scans
+      - name: Secrets Scan
+        uses: gitleaks/gitleaks-action@v2
+
+      - name: Dependency Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+
+      # AWS Setup
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Terraform
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Apply
+        run: |
+          terraform -chdir=terraform apply -auto-approve \
+            -var "key_name=${{ secrets.EC2_KEY_NAME }}" \
+            -var "ami_id=${{ secrets.AMI_ID }}"
+
+      # Get IPs
+      - name: Get Outputs
+        id: tf
+        run: |
+          echo "NGINX_IP=$(terraform -chdir=terraform output -raw nginx_ip)" >> $GITHUB_ENV
+          echo "APP_IP=$(terraform -chdir=terraform output -raw app_ip)" >> $GITHUB_ENV
+
+      # Build inventory
+      - name: Create inventory
+        run: |
+          echo "[nginx]" > ansible/inventory.ini
+          echo "$NGINX_IP" >> ansible/inventory.ini
+          echo "[app]" >> ansible/inventory.ini
+          echo "$APP_IP" >> ansible/inventory.ini
+
+      # Fix nginx config
+      - name: Replace APP IP
+        run: |
+          sed -i "s/APP_IP/$APP_IP/g" nginx/nginx.conf
+
+      # Setup SSH
+      - name: SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      # Install Ansible
+      - run: sudo apt update && sudo apt install -y ansible
+
+      # Wait for servers
+      - run: sleep 60
+
+      # Deploy
+      - name: Run Ansible
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False \
+          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
