@@ -1,0 +1,8 @@
+- name: Deploy App + Nginx
+  hosts: all
+  become: yes
+
+  roles:
+    - hardening
+    - nginx
+    - app
