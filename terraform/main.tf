@@ -1,3 +1,13 @@
+resource "aws_dynamodb_table" "tf_lock" {
+  name         = "tf-lock"
+  billing_mode = "FREE_TIER"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
 # ----------------------------
 # IAM ROLE FOR SSM
 # ----------------------------
