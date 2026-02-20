@@ -1,4 +1,9 @@
+# ----------------------------
+# IAM ROLE FOR SSM
+# ----------------------------
 resource "aws_iam_role" "ssm_role" {
+  name = "ec2-ssm-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -15,26 +20,29 @@ resource "aws_iam_role_policy_attachment" "ssm_attach" {
 }
 
 resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "ssm-instance-profile"
   role = aws_iam_role.ssm_role.name
 }
 
-
-
+# ----------------------------
+# EC2 INSTANCES
+# ----------------------------
 resource "aws_instance" "nginx" {
   ami           = var.ami_id
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.public.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
 
   vpc_security_group_ids = [aws_security_group.web_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
 
   tags = { Name = "nginx-server" }
 }
 
 resource "aws_instance" "app" {
   ami           = var.ami_id
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private_app.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.private_app1.id
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
@@ -44,8 +52,16 @@ resource "aws_instance" "app" {
   tags = { Name = "fastapi-app" }
 }
 
+# ----------------------------
+# RDS DATABASE
+# ----------------------------
 resource "aws_db_subnet_group" "db_subnet" {
-  subnet_ids = [aws_subnet.private_db.id]
+  name = "db-subnet-group"
+
+  subnet_ids = [
+    aws_subnet.private_db1.id,
+    aws_subnet.private_db2.id
+  ]
 }
 
 resource "aws_db_instance" "postgres" {
@@ -54,39 +70,59 @@ resource "aws_db_instance" "postgres" {
 
   allocated_storage = 20
   db_name           = "appdb"
-  username          = "dbadmin"
-  password          = var.db_password
 
-  db_subnet_group_name = aws_db_subnet_group.db_subnet.name
+  username = "dbadmin"
+  password = var.db_password
+
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
 
   publicly_accessible = false
   skip_final_snapshot = true
 }
 
+# ----------------------------
+# APPLICATION LOAD BALANCER
+# ----------------------------
 resource "aws_lb" "alb" {
+  name               = "app-alb"
   load_balancer_type = "application"
-  subnets            = [aws_subnet.public.id]
-  security_groups    = [aws_security_group.alb_sg.id]
+
+  subnets = [
+    aws_subnet.public1.id,
+    aws_subnet.public2.id
+  ]
+
+  security_groups = [aws_security_group.alb_sg.id]
 }
 
 resource "aws_lb_target_group" "tg" {
+  name     = "app-tg"
   port     = 8000
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
+
+  health_check {
+    path = "/"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "app_attach" {
+  target_group_arn = aws_lb_target_group.tg.arn
+  target_id        = aws_instance.app.id
+  port             = 8000
 }
 
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 443
-  protocol          = "HTTP" # Use ACM cert for HTTPS
-}
+  protocol          = "HTTPS"
 
-resource "aws_secretsmanager_secret" "db" {
-  name = "db_password"
-}
+  ssl_policy      = "ELBSecurityPolicy-2016-08"
+  certificate_arn = var.acm_cert_arn
 
-resource "aws_secretsmanager_secret_version" "db_value" {
-  secret_id     = aws_secretsmanager_secret.db.id
-  secret_string = var.db_password
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
 }
