@@ -33,7 +33,7 @@ resource "aws_instance" "nginx" {
 
 resource "aws_instance" "app" {
   ami           = var.ami_id
-  instance_type = "t2.micro"
+  instance_type = var.instance_type
   subnet_id     = aws_subnet.private_app.id
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
@@ -43,6 +43,8 @@ resource "aws_instance" "app" {
 
   tags = { Name = "fastapi-app" }
 }
+
+
 
 resource "aws_db_subnet_group" "db_subnet" {
   subnet_ids = [aws_subnet.private_db.id]
@@ -79,7 +81,15 @@ resource "aws_lb_target_group" "tg" {
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 443
-  protocol          = "HTTP" # Use ACM cert for HTTPS
+  protocol          = "HTTPS"
+
+  ssl_policy      = "ELBSecurityPolicy-2016-08"
+  certificate_arn = var.acm_cert_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
+  }
 }
 
 resource "aws_secretsmanager_secret" "db" {
