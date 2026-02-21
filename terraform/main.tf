@@ -18,8 +18,19 @@ resource "aws_iam_instance_profile" "ssm_profile" {
 }
 
 # EC2 instances (frontend and backend)
+
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-x86_64"]
+  }
+}
+
 resource "aws_instance" "nginx" {
-  ami           = var.ami_id
+  ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
@@ -29,7 +40,7 @@ resource "aws_instance" "nginx" {
 }
 
 resource "aws_instance" "app" {
-  ami           = var.ami_id
+  ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.private_app1.id
   key_name      = var.key_name
