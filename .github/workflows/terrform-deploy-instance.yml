@@ -1,45 +1,40 @@
-name: Enterprise Deploy
-
-on:
-  workflow_dispatch:
+name: Terraform + Ansible Deploy
+on: workflow_dispatch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-2
 
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-      # 🔐 Security scanning
-      - uses: gitleaks/gitleaks-action@v2
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
 
-      - uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-      # AWS auth
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+    - name: Terraform Init & Apply
+      run: |
+        terraform -chdir=terraform init -reconfigure
+        terraform -chdir=terraform apply -auto-approve \
+          -var="ami_id=${{ secrets.AMI_ID }}" \
+          -var="key_name=${{ secrets.KEY_NAME }}" \
+          -var="db_password=${{ secrets.DB_PASSWORD }}" \
+          -var="domain_name=${{ secrets.DOMAIN_NAME }}"
 
-      # Terraform
-      - uses: hashicorp/setup-terraform@v3
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
 
-      - run: terraform -chdir=terraform init
-
-      - run: |
-          terraform -chdir=terraform apply -auto-approve \
-            -var "ami_id=${{ secrets.AMI_ID }}" \
-            -var "db_password=${{ secrets.DB_PASSWORD }}"
-
-      # Install Ansible + AWS plugin
-      - run: |
-          sudo apt install -y ansible
-          pip install boto boto3 botocore
-
-      # Deploy via SSM
-      - run: |
-          ANSIBLE_HOST_KEY_CHECKING=False \
-          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
+    - name: Run Ansible Playbook
+      run: |
+        ansible-playbook -i terraform/inventory.ini ansible/playbook.yml
