@@ -66,10 +66,10 @@ jobs:
         echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
 
-    - name: test SSH Connection
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${NGINX_IP} "echo 'SSH to Nginx successful!'"
-        # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
+    # - name: test SSH Connection
+    #   run: |
+    #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${NGINX_IP} "echo 'SSH to Nginx successful!'"
+    #     # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
 
     - name: Validate Ansible Inventory
       run: ansible all -i terraform/inventory.ini -m ping
