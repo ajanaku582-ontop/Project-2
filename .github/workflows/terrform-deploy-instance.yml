@@ -25,7 +25,7 @@ jobs:
       run: |
         terraform -chdir=terraform init -reconfigure
         terraform -chdir=terraform apply -auto-approve \
-          -var="ami =${{ secrets.AMI_ID }}" \
+          -var="ami_id=${{ secrets.AMI_ID }}" \
           -var="key_name=${{ secrets.KEY_NAME }}" \
           -var="db_password=${{ secrets.DB_PASSWORD }}" \
           -var="domain_name=${{ secrets.DOMAIN_NAME }}"
