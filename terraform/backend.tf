@@ -4,7 +4,6 @@ terraform {
     key            = "secure-app-1/terraform.tfstate"
     region         = "us-east-2"
     dynamodb_table = "tf-lock"
-    profile        = "east2"
   }
 }
 
