@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "tf_lock" {
   name         = "tf-lock"
-  billing_mode = "FREE_TIER"
+  billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
   attribute {
