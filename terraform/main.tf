@@ -72,14 +72,14 @@ resource "aws_lb_target_group_attachment" "app_attach" {
   port             = 8000
 }
 
-# ACM certificate
-resource "aws_acm_certificate" "cert" {
-  domain_name       = var.domain_name
-  validation_method = "DNS"
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+# # ACM certificate
+# resource "aws_acm_certificate" "cert" {
+#   domain_name       = var.domain_name
+#   validation_method = "DNS"
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
 # ALB Listener HTTPS
 resource "aws_lb_listener" "http" {
