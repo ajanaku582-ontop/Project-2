@@ -5,6 +5,6 @@ variable "db_password" {
   type = string
 }
 variable "domain_name" {
-  description = "Your domain for ACM certificate (e.g., ennyontop1.duckdns.org)"
+  default     = "enny1ontop.duckdns.org"
   type        = string
 }

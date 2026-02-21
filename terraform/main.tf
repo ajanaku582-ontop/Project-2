@@ -81,22 +81,15 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-resource "aws_route53_record" "cert_validation" {
-  for_each = { for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo }
-  zone_id  = data.aws_route53_zone.main.zone_id
-  name     = each.value.resource_record_name
-  type     = each.value.resource_record_type
-  records  = [each.value.resource_record_value]
-  ttl      = 60
+data "aws_route53_zone" "main" {
+  name         = var.domain_name
+  private_zone = false
 }
-
 # ALB Listener HTTPS
-resource "aws_lb_listener" "https" {
+resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.alb.arn
-  port              = 443
-  protocol          = "HTTPS"
-
-  certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
+  port              = 80
+  protocol          = "HTTP"
 
   default_action {
     type             = "forward"
