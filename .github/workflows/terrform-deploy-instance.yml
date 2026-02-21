@@ -74,6 +74,9 @@ jobs:
     - name: Validate Ansible Inventory
       run: ansible all -i terraform/inventory.ini -m ping
 
+    - name: Run Ansible OS Hardening
+      run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+
     - name: Run Ansible Playbook
       run: |
         ansible-playbook -i terraform/inventory.ini playbooks/playbook.yml
