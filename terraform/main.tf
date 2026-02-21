@@ -1,3 +1,13 @@
+resource "aws_dynamodb_table" "tf_lock" {
+  name         = "tf-lock"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
 # ----------------------------
 # IAM ROLE FOR SSM
 # ----------------------------
@@ -81,6 +91,19 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot = true
 }
 
+resource "aws_acm_certificate" "cert" {
+  domain_name       = "ennyontop1.duckdns.org"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "my-cert"
+  }
+}
+
 # ----------------------------
 # APPLICATION LOAD BALANCER
 # ----------------------------
@@ -119,7 +142,7 @@ resource "aws_lb_listener" "https" {
   protocol          = "HTTPS"
 
   ssl_policy      = "ELBSecurityPolicy-2016-08"
-  certificate_arn = var.acm_cert_arn
+  certificate_arn = aws_acm_certificate.cert.arn
 
   default_action {
     type             = "forward"

@@ -30,6 +30,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: generate variable.tfvars
+        working-directory: terraform
+        run: |
+          cat <<EOF > terraform.tfvars
+          ami   = "${{ secrets.TF_VAR_ami_id }}"
+          key_name = "${{ secrets.TF_VAR_key_name }}"
+          EOF
+
       # Terraform
       - uses: hashicorp/setup-terraform@v3
 
@@ -39,7 +47,7 @@ jobs:
       - name: Terraform Apply
         run: |
           terraform -chdir=terraform apply -auto-approve \
-            -var "key_name=${{ secrets.EC2_KEY_NAME }}" \
+            -var "key_name=${{ secrets.KEY_NAME }}" \
             -var "ami_id=${{ secrets.AMI_ID }}"
 
       # Get IPs
@@ -66,8 +74,8 @@ jobs:
       - name: SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
 
       # Install Ansible
       - run: sudo apt update && sudo apt install -y ansible
