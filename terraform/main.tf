@@ -81,10 +81,6 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-data "aws_route53_zone" "main" {
-  name         = var.domain_name
-  private_zone = false
-}
 # ALB Listener HTTPS
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.alb.arn
