@@ -22,7 +22,6 @@ jobs:
       working-directory: terraform
       run: |
         cat <<EOF > terraform.tfvars
-        ami   = "${{ secrets.TF_VAR_ami_id }}"
         key_name = "${{ secrets.TF_VAR_key_name }}"
         db_password = "${{ secrets.TF_VAR_db_password }}"
         domain_name = "${{ secrets.TF_VAR_domain_name }}"
@@ -35,9 +34,9 @@ jobs:
       run: |
         terraform -chdir=terraform init -reconfigure
         terraform -chdir=terraform apply -auto-approve \
-          -var "key_name=${{ secrets.TF_VAR_key_name }}" \
-          -var "db_password=${{ secrets.TF_VAR_db_password }}" \
-          -var "domain_name=${{ secrets.TF_VAR_domain_name }}"
+          # -var "key_name=${{ secrets.TF_VAR_key_name }}" \
+          # -var "db_password=${{ secrets.TF_VAR_db_password }}" \
+          # -var "domain_name=${{ secrets.TF_VAR_domain_name }}"
     - name: Get Terraform Outputs
       id: tf
       run: |
