@@ -24,7 +24,7 @@ resource "aws_instance" "nginx" {
   subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  vpc_security_group_ids = [aws_security_group.nginx_sg.id]
   tags = { Name = "nginx-server" }
 }
 
