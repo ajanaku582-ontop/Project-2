@@ -72,18 +72,21 @@ resource "aws_lb_target_group_attachment" "app_attach" {
   port             = 8000
 }
 
-# ACM certificate
-resource "aws_acm_certificate" "cert" {
-  domain_name       = var.domain_name
-  validation_method = "DNS"
-}
+# # ACM certificate
+# resource "aws_acm_certificate" "cert" {
+#   domain_name       = var.domain_name
+#   validation_method = "DNS"
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
 # ALB Listener HTTPS
-resource "aws_lb_listener" "https" {
+resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.alb.arn
-  port              = 443
-  protocol          = "HTTPS"
-  certificate_arn   = aws_acm_certificate.cert.arn
+  port              = 80
+  protocol          = "HTTP"
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.tg.arn

@@ -1,11 +1,62 @@
-- name: Disable root SSH login
+---
+- name: Update all packages
+  yum:
+    name: "*"
+    state: latest
+  when: update_packages
+
+- name: Ensure root login is disabled in SSH
   lineinfile:
     path: /etc/ssh/sshd_config
     regexp: '^PermitRootLogin'
     line: 'PermitRootLogin no'
+  notify: Restart SSH
 
-- name: Enable firewall
+- name: Ensure password authentication is disabled
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: Restart SSH
+
+- name: Ensure firewall is enabled
+  firewalld:
+    state: enabled
+    permanent: yes
+  when: firewall_enabled
+
+- name: Open SSH port in firewall
+  firewalld:
+    port: "{{ ssh_port }}/tcp"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  when: firewall_enabled
+
+- name: Open HTTP port in firewall
+  firewalld:
+    port: 80/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  when: firewall_enabled
+
+- name: Open HTTPS port in firewall
+  firewalld:
+    port: 443/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+  when: firewall_enabled
+
+- name: Ensure SSM Agent is running
   service:
-    name: firewalld
+    name: amazon-ssm-agent
     state: started
     enabled: yes
+
+# Handlers
+- name: Restart SSH
+  service:
+    name: sshd
+    state: restarted
