@@ -8,3 +8,5 @@ variable "domain_name" {
   default     = "enny1ontop.duckdns.org"
   type        = string
 }
+
+data "aws_route53_zone" "main" {}
