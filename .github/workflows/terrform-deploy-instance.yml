@@ -33,7 +33,7 @@ jobs:
     - name: Terraform Init & Apply
       run: |
         terraform -chdir=terraform init -reconfigure
-        terraform -chdir=terraform apply -auto-approve \
+        terraform -chdir=terraform destroy -auto-approve \
           # -var "key_name=${{ secrets.TF_VAR_key_name }}" \
           # -var "db_password=${{ secrets.TF_VAR_db_password }}" \
           # -var "domain_name=${{ secrets.TF_VAR_domain_name }}"
@@ -66,10 +66,10 @@ jobs:
         echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
 
-    - name: test SSH Connection
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${NGINX_IP} "echo 'SSH to Nginx successful!'"
-        # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
+    # - name: test SSH Connection
+    #   run: |
+    #     ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${NGINX_IP} "echo 'SSH to Nginx successful!'"
+    #     # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
 
     - name: Validate Ansible Inventory
       run: ansible all -i terraform/inventory.ini -m ping
