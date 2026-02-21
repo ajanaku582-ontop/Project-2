@@ -1,8 +1,36 @@
-- name: Deploy App + Nginx
-  hosts: all
+- hosts: nginx
   become: yes
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    - name: Deploy index.html
+      copy:
+        src: ../user_data/index.html
+        dest: /usr/share/nginx/html/index.html
 
-  roles:
-    - hardening
-    - nginx
-    - app
+- hosts: app
+  become: yes
+  tasks:
+    - name: Install Python3 & pip
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+    - name: Install requirements
+      pip:
+        requirements: ../user_data/requirements.txt
+    - name: Deploy main.py
+      copy:
+        src: ../user_data/main.py
+        dest: /home/ec2-user/main.py
+    - name: Start FastAPI
+      shell: "nohup python3 /home/ec2-user/main.py &"

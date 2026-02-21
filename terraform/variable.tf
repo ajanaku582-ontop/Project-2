@@ -4,4 +4,6 @@ variable "key_name" {}
 variable "ami_id" {}
 variable "db_password" {}
 variable "acm_cert_arn" {}
-
+variable "domain_name" {
+  default = "ennyontop1.duckdns.org"
+}
