@@ -151,3 +151,16 @@ resource "aws_subnet" "private_db2" {
   availability_zone = "us-east-2b"
   map_public_ip_on_launch = false
 }
+
+resource "aws_db_subnet_group" "db" {
+  name = "terraform-db-subnet-group"
+
+  subnet_ids = [
+    aws_subnet.private_db1.id,
+    aws_subnet.private_db2.id
+  ]
+
+  tags = {
+    Name = "terraform-db-subnet-group"
+  }
+}
