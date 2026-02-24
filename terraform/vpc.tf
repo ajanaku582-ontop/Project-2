@@ -25,16 +25,6 @@ resource "aws_subnet" "private_app1" {
   cidr_block = "10.0.10.0/24"
 }
 
-resource "aws_subnet" "private_db1" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.20.0/24"
-}
-
-resource "aws_subnet" "private_db2" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.21.0/24"
-}
-
 # ----------------------------
 # Security Groups
 # ----------------------------
@@ -145,4 +135,19 @@ resource "aws_route_table_association" "public1" {
 resource "aws_route_table_association" "public2" {
   subnet_id      = aws_subnet.public2.id
   route_table_id = aws_route_table.public_rt.id
+}
+
+# RDS Postgres
+resource "aws_subnet" "private_db1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-2a"
+  map_public_ip_on_launch = false
+}
+
+resource "aws_subnet" "private_db2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = "us-east-2b"
+  map_public_ip_on_launch = false
 }

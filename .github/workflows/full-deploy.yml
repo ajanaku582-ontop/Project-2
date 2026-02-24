@@ -56,7 +56,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform
-        run: terraform init
+        run: terraform init -reconfigure
 
       - name: Terraform validate
         working-directory: terraform
@@ -124,7 +124,7 @@ jobs:
           echo "APP_IP=$(terraform -chdir=terraform output -raw app_ip)" >> $GITHUB_ENV
           echo "BASTION_IP=$(terraform -chdir=terraform output -raw bastion_ip)" >> $GITHUB_ENV
           echo "DB_IP=$(terraform -chdir=terraform output -raw db_ip)" >> $GITHUB_ENV
-          
+
       # Fix nginx config
       - name: Replace APP IP
         run: |
@@ -137,14 +137,26 @@ jobs:
           echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
           chmod 600 ~/.ssh/ec2.pem
 
+      # Test SSH Connection
+      - name: Test SSH to Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${{ env.NGINX_IP }} "echo 'SSH connection to Nginx successful!'"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${{ env.BASTION_IP }} "echo 'SSH connection to Bastion successful!'"
+
       # Install Ansible
       - run: sudo apt update && sudo apt install -y ansible
 
       # Wait for servers
       - run: sleep 60
 
+      - name: Run Ansible OS Hardening
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False \
+          ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
+
       # Deploy
       - name: Run Ansible
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False \
+
           ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
