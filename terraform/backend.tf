@@ -3,7 +3,7 @@ terraform {
     bucket         = "eniola-cicd-state-bucket"
     key            = "secure-app-proj/terraform.tfstate"
     region         = "us-east-2"
-    dynamodb_table = "tf-lock"
+    dynamodb_table = "terraform-locks"
   }
 }
 
