@@ -42,7 +42,7 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-     - name: Terraform Init
+    - name: Terraform Init
       working-directory: terraform
       run: terraform init
 
@@ -87,7 +87,7 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
-        
+
     - name: Install Ansible
       run: |
         sudo apt update
@@ -101,15 +101,16 @@ jobs:
 
         [app]
         ${APP_IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/${{ secrets.TF_VAR_key_name }}.pem
+
+        [bastion]
+        ${BASTION_IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/${{ secrets.TF_VAR_key_name }}.pem
+
+         [db]
+        ${DB_IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/${{ secrets.TF_VAR_key_name }}.pem
+
         EOF 
     - name: Display Inventory
       run: cat terraform/inventory.ini
-
-    - name: Setup SSH Key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
-        chmod 400 ~/.ssh/ec2.pem
 
     # - name: test SSH Connection
     #   run: |
@@ -117,13 +118,19 @@ jobs:
     #     # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
 
     - name: Validate Ansible Inventory
-      run: ansible all -i terraform/inventory.ini -m ping
+      run: ansible nginx -i terraform/inventory.ini -m ping
+    
+    - name: Validate Ansible Inventory for Bastion
+      run: ansible bastion -i terraform/inventory.ini -m ping
+
+    - name: Validate Ansible Inventory for DB
+      run: ansible db -i terraform/inventory.ini -m ping
 
     - name: Run Ansible OS Hardening
-      run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+      run: ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
 
     - name: Run Ansible Playbook
       run: |
-        ansible-playbook -i terraform/inventory.ini playbooks/playbook.yml
+        ansible-playbook -i terraform/inventory.ini playbooks/site.yml
 
     
