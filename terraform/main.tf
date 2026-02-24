@@ -17,6 +17,17 @@ resource "aws_iam_instance_profile" "ssm_profile" {
   role = aws_iam_role.ssm_role.name
 }
 
+resource "aws_dynamodb_table" "terraform_locks" {
+  name         = "terraform-locks"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
+
 # EC2 instances (frontend and backend)
 
 data "aws_ami" "amazon_linux" {
@@ -125,4 +136,7 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   publicly_accessible = false
   skip_final_snapshot = true
+
+  tags = { Name = "postgres-db" }
+
 }

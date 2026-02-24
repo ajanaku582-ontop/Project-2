@@ -1,5 +1,17 @@
 name: Terraform + Ansible Deploy
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      tf_action:
+        description: "Terraform action"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+        default: plan
+
 
 jobs:
   deploy:
@@ -30,19 +42,52 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init & Apply
-      run: |
-        terraform -chdir=terraform init -reconfigure
-        terraform -chdir=terraform destroy -auto-approve \
-          # -var "key_name=${{ secrets.TF_VAR_key_name }}" \
-          # -var "db_password=${{ secrets.TF_VAR_db_password }}" \
-          # -var "domain_name=${{ secrets.TF_VAR_domain_name }}"
-    - name: Get Terraform Outputs
-      id: tf
-      run: |
-        echo "NGINX_IP=$(terraform -chdir=terraform output -raw nginx_ip)" >> $GITHUB_ENV
-        echo "APP_IP=$(terraform -chdir=terraform output -raw app_ip)" >> $GITHUB_ENV
+     - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
 
+    - name: Terraform validate
+      working-directory: terraform
+      run: terraform validate
+      
+    - name: Terraform plan
+      if: github.event.inputs.tf_action == 'plan'
+      working-directory: terraform
+      run: terraform plan
+
+    - name: Terraform Apply
+      if: github.event.inputs.tf_action == 'apply'
+      working-directory: terraform
+      run: terraform apply -auto-approve
+
+    - name: Terraform Destroy
+      if: github.event.inputs.tf_action == 'destroy'
+      working-directory: terraform
+      run: terraform destroy -auto-approve
+
+    - name: Capture Terraform Outputs
+      if: github.event.inputs.tf_action == 'apply'
+      working-directory: terraform
+      run: |
+          echo "APP_IP=$(terraform output -raw app_node_ip)" >> $GITHUB_ENV
+          echo "NGINX_IP=$(terraform output -raw nginx_node_ip)" >> $GITHUB_ENV
+          echo "BASTION_IP=$(terraform output -raw bastion_node_ip)" >> $GITHUB_ENV
+
+    - name: Show Outputs
+      if: github.event.inputs.tf_action == 'apply'
+      run: |
+             echo "App Node IP: ${{ env.APP_IP }}"
+             echo "Nginx Node IP: ${{ env.NGINX_IP }}"
+             echo "Bastion Node IP: ${{ env.BASTION_IP }}"
+             echo "Domain Name: ${{ secrets.TF_VAR_domain_name }}"
+             echo "POSTGRES-DB IP: ${{ env.DB_IP }}"
+        
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
+        chmod 400 ~/.ssh/ec2.pem
+        
     - name: Install Ansible
       run: |
         sudo apt update
