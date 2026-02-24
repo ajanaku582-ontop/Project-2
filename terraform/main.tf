@@ -21,6 +21,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
   name         = "terraform-locks"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
+  region = us-east-2
 
   attribute {
     name = "LockID"
@@ -42,7 +43,7 @@ data "aws_ami" "amazon_linux" {
 
 resource "aws_instance" "nginx" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t3.micro"
+  instance_type = "c7i-flex.large"
   subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
@@ -55,7 +56,7 @@ resource "aws_instance" "nginx" {
 
 resource "aws_instance" "app" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t3.micro"
+  instance_type = "c7i-flex.large"
   subnet_id     = aws_subnet.private_app1.id
   key_name      = var.key_name
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
@@ -68,7 +69,7 @@ resource "aws_instance" "app" {
 
 resource "aws_instance" "bastion" {
   ami           = data.aws_ami.amazon_linux.id
-  instance_type = "t3.micro"
+  instance_type = "c7i-flex.large"
   subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
