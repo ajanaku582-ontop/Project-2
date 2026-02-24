@@ -25,16 +25,6 @@ resource "aws_subnet" "private_app1" {
   cidr_block = "10.0.10.0/24"
 }
 
-resource "aws_subnet" "private_db1" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.20.0/24"
-}
-
-resource "aws_subnet" "private_db2" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.21.0/24"
-}
-
 # ----------------------------
 # Security Groups
 # ----------------------------
