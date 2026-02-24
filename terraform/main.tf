@@ -36,6 +36,9 @@ resource "aws_instance" "nginx" {
   key_name      = var.key_name
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
   vpc_security_group_ids = [aws_security_group.nginx_sg.id]
+  associate_public_ip_address = true
+  user_data = file("nginx.sh")
+
   tags = { Name = "nginx-server" }
 }
 
@@ -47,7 +50,21 @@ resource "aws_instance" "app" {
   iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   associate_public_ip_address = false
+  user_data = file("app.sh")
+  
   tags = { Name = "app-server" }
+}
+
+resource "aws_instance" "bastion" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public1.id
+  key_name      = var.key_name
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
+  associate_public_ip_address = true
+
+  tags = { Name = "Bastion-server" }
 }
 
 # ALB
