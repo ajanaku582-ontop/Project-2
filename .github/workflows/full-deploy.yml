@@ -77,86 +77,77 @@ jobs:
         working-directory: terraform
         run: terraform destroy -auto-approve
 
+      # Capture Terraform outputs
       - name: Capture Terraform Outputs
         if: github.event.inputs.tf_action == 'apply'
         working-directory: terraform
         run: |
-          echo "APP_IP=$(terraform output -raw app_node_ip)" >> $GITHUB_ENV
           echo "NGINX_IP=$(terraform output -raw nginx_node_ip)" >> $GITHUB_ENV
+          echo "APP_IP=$(terraform output -raw app_node_ip)" >> $GITHUB_ENV
           echo "BASTION_IP=$(terraform output -raw bastion_node_ip)" >> $GITHUB_ENV
+          echo "DB_IP=$(terraform output -raw db_node_ip)" >> $GITHUB_ENV
 
+      # Show Outputs (optional)
       - name: Show Outputs
         if: github.event.inputs.tf_action == 'apply'
         run: |
-             echo "App Node IP: ${{ env.APP_IP }}"
-             echo "Nginx Node IP: ${{ env.NGINX_IP }}"
-             echo "Bastion Node IP: ${{ env.BASTION_IP }}"
-             echo "Domain Name: ${{ secrets.TF_VAR_domain_name }}"
-             echo "POSTGRES-DB IP: ${{ env.DB_IP }}"
-        
+          echo "App Node IP: ${{ env.APP_IP }}"
+          echo "Nginx Node IP: ${{ env.NGINX_IP }}"
+          echo "Bastion Node IP: ${{ env.BASTION_IP }}"
+          echo "DB IP: ${{ env.DB_IP }}"
+          echo "Domain Name: ${{ secrets.TF_VAR_domain_name }}"
+
+      # Setup SSH Key
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
           chmod 400 ~/.ssh/ec2.pem
-      - name: Create Ansible Inventory
-        run: |  
 
+      # Create Ansible Inventory
+      - name: Create Ansible Inventory
+        run: |
           cat <<EOF > terraform/inventory.ini
           [nginx]
           ${{ env.NGINX_IP }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem
 
-           [app]
+          [app]
           ${{ env.APP_IP }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem
 
-           [bastion]
+          [bastion]
           ${{ env.BASTION_IP }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem
 
-           [db]
+          [db]
           ${{ env.DB_IP }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem
-
           EOF
-      # Get IPs
-      - name: Get Outputs
-        id: tf
-        run: |
-          echo "NGINX_IP=$(terraform -chdir=terraform output -raw nginx_ip)" >> $GITHUB_ENV
-          echo "APP_IP=$(terraform -chdir=terraform output -raw app_ip)" >> $GITHUB_ENV
-          echo "BASTION_IP=$(terraform -chdir=terraform output -raw bastion_ip)" >> $GITHUB_ENV
-          echo "DB_IP=$(terraform -chdir=terraform output -raw db_ip)" >> $GITHUB_ENV
 
-      # Fix nginx config
-      - name: Replace APP IP
+      # Replace APP IP in nginx config
+      - name: Replace APP IP in nginx.conf
         run: |
-          sed -i "s/APP_IP/$APP_IP/g" nginx/nginx.conf
+          sed -i "s/APP_IP/${{ env.APP_IP }}/g" nginx/nginx.conf
 
-      # Setup SSH
-      - name: SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
-          chmod 600 ~/.ssh/ec2.pem
-
-      # Test SSH Connection
-      - name: Test SSH to Nginx
+      # Test SSH Connections
+      - name: Test SSH Connections
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${{ env.NGINX_IP }} "echo 'SSH connection to Nginx successful!'"
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${{ env.BASTION_IP }} "echo 'SSH connection to Bastion successful!'"
 
       # Install Ansible
-      - run: sudo apt update && sudo apt install -y ansible
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible
 
-      # Wait for servers
-      - run: sleep 60
+      # Wait for servers to be ready
+      - name: Wait for servers
+        run: sleep 60
 
+      # Run Ansible OS Hardening
       - name: Run Ansible OS Hardening
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False \
           ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
 
-      # Deploy
-      - name: Run Ansible
+      # Deploy Application
+      - name: Run Ansible Deploy
         run: |
           ANSIBLE_HOST_KEY_CHECKING=False \
-
-          ansible-playbook -i ansible/inventory.ini ansible/deploy.yml
+          ansible-playbook -i terraform/inventory.ini ansible/deploy.yml
