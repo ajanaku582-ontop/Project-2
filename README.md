@@ -1,7 +1,7 @@
 
 Overview
 
-This project provisions a cloud infrastructure on AWS using Terraform and configures the deployed instances using Ansible.
+My project provisions a cloud infrastructure on AWS using Terraform and configures the deployed instances Nginx, App, Bastion and Postgres servers using Ansible.
 
 The infrastructure includes:
 
