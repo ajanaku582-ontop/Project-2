@@ -146,3 +146,12 @@ resource "aws_route_table_association" "public2" {
   subnet_id      = aws_subnet.public2.id
   route_table_id = aws_route_table.public_rt.id
 }
+
+# RDS Postgres
+resource "aws_db_subnet_group" "db" {
+  name       = "terraform-db-subnet-group"
+  subnet_ids = [aws_subnet.private_db1.id, aws_subnet.private_db2.id]  # two AZs required
+  tags = {
+    Name = "postgres-subnet-group"
+  }
+}
