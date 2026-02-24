@@ -1,0 +1,11 @@
+# ansible/templates/nginx.conf.j2
+server {
+    listen 80;
+    server_name ennyontop1.duckns.org;
+
+    location / {
+        proxy_pass http://{{ app_ip }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}

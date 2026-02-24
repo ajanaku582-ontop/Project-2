@@ -1,0 +1,31 @@
+name: Deploy Nginx
+
+on:
+  push:
+    branches:
+      - updated1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Nginx
+        run: sudo yum install -y nginx
+
+      - name: Deploy nginx.conf from template
+        run: sudo cp nginx.conf.j2 /etc/nginx/nginx.conf
+
+      - name: Copy index.html
+        run: sudo cp ../terraform/nginx/index.html /usr/share/nginx/html/index.html
+
+      - name: Ensure Nginx is running
+        run: |
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
+
+      - name: Run Ansible Deploy Nginx
+        run: |
+          ANSIBLE_HOST_KEY_CHECKING=False \
+          ansible-playbook -i terraform/inventory.ini ansible/deploy_nginx.yml
