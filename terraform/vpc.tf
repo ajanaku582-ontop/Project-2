@@ -140,14 +140,27 @@ resource "aws_route_table_association" "public2" {
 # RDS Postgres
 resource "aws_subnet" "private_db1" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = "10.0.4.0/24"
   availability_zone = "us-east-2a"
   map_public_ip_on_launch = false
 }
 
 resource "aws_subnet" "private_db2" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.3.0/24"
+  cidr_block        = "10.0.5.0/24"
   availability_zone = "us-east-2b"
   map_public_ip_on_launch = false
+}
+
+resource "aws_db_subnet_group" "db" {
+  name = "terraform-db-subnet-group"
+
+  subnet_ids = [
+    aws_subnet.private_db1.id,
+    aws_subnet.private_db2.id
+  ]
+
+  tags = {
+    Name = "terraform-db-subnet-group"
+  }
 }
