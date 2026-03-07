@@ -130,6 +130,9 @@ jobs:
       - name: Install Ansible
         run: sudo apt update && sudo apt install -y ansible
 
+      - name: Ensure python3-apt exists
+        run:  sudo apt-get update && sudo apt-get install -y python3-apt
+
       # Wait for servers to be ready
       - name: Wait for servers
         run: sleep 60

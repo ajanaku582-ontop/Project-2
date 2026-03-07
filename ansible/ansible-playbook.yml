@@ -1,10 +1,18 @@
 
 ---
 - name: Configure EC2 Servers
-  hosts: all
+  hosts: bastion
   become: true
 
   tasks:
+
+    - name: Check python3 version
+      raw: python3 --version
+      register: python_test
+
+    - name: Display python version
+      debug:
+        msg: "Python version is {{ python_test.stdout }}"
 
     - name: Update apt packages
       apt:
