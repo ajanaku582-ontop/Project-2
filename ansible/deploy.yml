@@ -1,0 +1,64 @@
+name: Ansible Deployment (Ubuntu Runner)
+
+on:
+  workflow_dispatch:
+    inputs:
+      Bastion_ip:
+        description: "Public IP of bastion EC2"
+        required: true
+      
+      app_ip:
+        description: "Private IP of app EC2"
+        required: true
+      
+      postgres_ip:
+        description: "Private IP of postgres EC2"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python (for Ansible)
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
+        chmod 400 ~/.ssh/ec2.pem
+
+    - name: Generate Ansible Inventory
+      working-directory: ansible
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+      run: |
+        mkdir -p inventory
+        echo "[app]" > inventory.ini
+        echo "${{ github.event.inputs.app_ip }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+        echo "" >> inventory.ini
+        echo "[bastion]" >> inventory.ini
+        echo "${{ github.event.inputs.Bastion_ip }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+        echo "" >> inventory.ini
+        echo "[postgres]" >> inventory.ini
+        echo "${{ github.event.inputs.postgres_ip }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/ec2.pem" >> inventory.ini
+
+    - name: Test SSH Connectivity
+      run: |
+        cd ansible
+        ansible bastion -i inventory.ini -m ping
+        ansible app -i inventory.ini -m ping
+        ansible postgres -i inventory.ini -m ping
+
+    - name: Run Ansible Playbook
+      run: |
+        cd ansible
+        ansible-playbook -i inventory.ini playbooks/site.yml
