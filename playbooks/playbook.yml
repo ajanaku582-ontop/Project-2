@@ -7,9 +7,13 @@
         state: present
     - name: Start Nginx
       service:
-        name: nginx
+        name: 
+              - nginx
+              - git
+              - curl
+
         state: started
-        enabled: yes
+        enabled: true
     - name: Deploy index.html
       copy:
         src: ../user_data/index.html
