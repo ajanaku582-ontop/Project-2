@@ -80,7 +80,7 @@ jobs:
       if: success()
       working-directory: terraform
       run: |
-             echo "NGINX_IPS=$(terraform output -json nginx_public_ips)" >> $GITHUB_ENV
+             echo "BASTION_IPS=$(terraform output -json bastion_public_ips)" >> $GITHUB_ENV
              echo "APP_IPS=$(terraform output -json app_private_ips)" >> $GITHUB_ENV
              echo "POSTGRES_IPS=$(terraform output -json postgres_private_ips)" >> $GITHUB_ENV
 
@@ -88,7 +88,7 @@ jobs:
       if: github.event.inputs.tf_action == 'apply'
       run: |
              echo "App Node IP: ${{ env.APP_IPS }}"
-             echo "Nginx Node IP: ${{ env.NGINX_IPS }}"
+             echo "Bastion Node IP: ${{ env.BASTION_IPS }}"
              echo "Grace-Postgres Node IP: ${{ env.POSTGRES_IPS }}"
 
     
