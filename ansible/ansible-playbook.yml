@@ -1,7 +1,6 @@
-
 ---
 - name: Configure EC2 Servers
-  hosts: bastion
+  hosts: all
   become: true
 
   tasks:
@@ -14,17 +13,13 @@
       debug:
         msg: "Python version is {{ python_test.stdout }}"
 
+    - name: Bootstrap apt dependency
+      raw: sudo apt-get update -y && sudo apt-get install -y python3-apt
+
     - name: Update apt packages
       apt:
         update_cache: yes
 
-    - name: Install required packages
-      apt:
-        name:
-          - nginx
-          - git
-          - curl
-        state: present
     - name: Install required packages
       apt:
         name:
