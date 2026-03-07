@@ -39,14 +39,10 @@
                 
                 echo "Nginx installation completed!"
 
-- name: Install Java
-  hosts: java
+- name: Install app
+  hosts: app
   become: true
   tasks:
-    - name: Install Java 17
-      yum:
-        name: java-17-amazon-corretto
-        update_cache: yes
     - name: Install Python 3 and pip
       yum:
         name: 
