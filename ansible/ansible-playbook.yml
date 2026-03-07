@@ -1,15 +1,15 @@
----
-# - name: OS Hardening for EC2 instances
-#   hosts: all
-#   become: true
-#   roles:
-#     - os-hardening
+- name: Setup Python
+  uses: actions/setup-python@v5
+  with:
+    python-version: '3.11'
+
+- name: Install Ansible
+  run: pip install ansible
 
 - name: Install Ansible roles
   run: ansible-galaxy install -r ansible/requirements.yml
 
 - name: Run Playbook
-  run: ansible-playbook -i inventory.ini ansible/ansible-playbook.yml
+  run: ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
   env:
-    ANSIBLE_HOST_KEY_CHECKING: 'False'
-    
+    ANSIBLE_HOST_KEY_CHECKING: "False"
