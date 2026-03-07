@@ -14,9 +14,9 @@
       debug:
         msg: "Python version is {{ python_test.stdout }}"
 
-    - name: Update apt packages
-      apt:
-        update_cache: yes
+    # - name: Update apt packages
+    #   apt:
+    #     update_cache: yes
 
     - name: Install required packages
       apt:
