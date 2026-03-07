@@ -69,41 +69,23 @@ jobs:
       if: github.event.inputs.tf_action == 'apply'
       working-directory: terraform
       run: |
-<<<<<<< HEAD
-            
-    - name: Capture Terraform Outputs
-      if: success()
-      working-directory: terraform
-      run: |
-             echo "BASTION_IPS=$(terraform output -json bastion_public_ips)" >> $GITHUB_ENV
-             echo "APP_IPS=$(terraform output -json app_private_ips)" >> $GITHUB_ENV
-             echo "POSTGRES_IPS=$(terraform output -json postgres_private_ips)" >> $GITHUB_ENV
-=======
-          echo "APP_IP=$(terraform output -raw app_node_ip)" >> $GITHUB_ENV
-          echo "NGINX_IP=$(terraform output -raw nginx_node_ip)" >> $GITHUB_ENV
-          echo "BASTION_IP=$(terraform output -raw bastion_node_ip)" >> $GITHUB_ENV
->>>>>>> 65c888eeec0f747f78eca4f7c66a96b9d9237edf
+        echo "APP_IP=$(terraform output -raw app_node_ip)" >> $GITHUB_ENV
+        echo "NGINX_IP=$(terraform output -raw nginx_node_ip)" >> $GITHUB_ENV
+        echo "BASTION_IP=$(terraform output -raw bastion_node_ip)" >> $GITHUB_ENV
 
     - name: Show Outputs
       if: github.event.inputs.tf_action == 'apply'
       run: |
-<<<<<<< HEAD
-             echo "App Node IP: ${{ env.APP_IPS }}"
-             echo "Bastion Node IP: ${{ env.BASTION_IPS }}"
-             echo "Grace-Postgres Node IP: ${{ env.POSTGRES_IPS }}"
-=======
-             echo "App Node IP: ${{ env.APP_IP }}"
-             echo "Nginx Node IP: ${{ env.NGINX_IP }}"
-             echo "Bastion Node IP: ${{ env.BASTION_IP }}"
-             echo "Domain Name: ${{ secrets.TF_VAR_domain_name }}"
-             echo "POSTGRES-DB IP: ${{ env.DB_IP }}"
-        
+        echo "App Node IP: ${{ env.APP_IP }}"
+        echo "Bastion Node IP: ${{ env.BASTION_IP }}"
+        echo "Domain Name: ${{ secrets.TF_VAR_domain_name }}"
+        echo "POSTGRES-DB IP: ${{ env.DB_IP }}"
+
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/ec2.pem
         chmod 400 ~/.ssh/ec2.pem
->>>>>>> 65c888eeec0f747f78eca4f7c66a96b9d9237edf
 
     - name: Install Ansible
       run: |
@@ -113,8 +95,6 @@ jobs:
     - name: Build Ansible Inventory
       run: |
         cat <<EOF > terraform/inventory.ini
-        [nginx]
-        ${NGINX_IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/${{ secrets.TF_VAR_key_name }}.pem
 
         [app]
         ${APP_IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/${{ secrets.TF_VAR_key_name }}.pem
@@ -135,9 +115,6 @@ jobs:
     #     # ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2.pem ec2-user@${APP_IP} "echo 'SSH to App successful!'"
 
     - name: Validate Ansible Inventory
-      run: ansible nginx -i terraform/inventory.ini -m ping
-    
-    - name: Validate Ansible Inventory for Bastion
       run: ansible bastion -i terraform/inventory.ini -m ping
 
     - name: Validate Ansible Inventory for DB
