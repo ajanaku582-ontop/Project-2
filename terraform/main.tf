@@ -1,21 +1,4 @@
-# SSM Role
-resource "aws_iam_role" "ssm_role" {
-  name = "ec2-ssm-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" } }]
-  })
-}
 
-resource "aws_iam_role_policy_attachment" "ssm_attach" {
-  role       = aws_iam_role.ssm_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "ssm-instance-profile"
-  role = aws_iam_role.ssm_role.name
-}
 
 # resource "aws_dynamodb_table" "terraform_locks" {
 #   name         = "terraform-locks"
@@ -40,25 +23,11 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-resource "aws_instance" "nginx" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = "c7i-flex.large"
-  subnet_id     = aws_subnet.public1.id
-  key_name      = var.key_name
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
-  vpc_security_group_ids = [aws_security_group.nginx_sg.id]
-  associate_public_ip_address = true
-  user_data = file("nginx.sh")
-
-  tags = { Name = "nginx-server" }
-}
-
 resource "aws_instance" "app" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "c7i-flex.large"
   subnet_id     = aws_subnet.private_app1.id
   key_name      = var.key_name
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
   vpc_security_group_ids = [aws_security_group.app_sg.id]
   associate_public_ip_address = false
   user_data = file("app.sh")
@@ -71,9 +40,9 @@ resource "aws_instance" "bastion" {
   instance_type = "c7i-flex.large"
   subnet_id     = aws_subnet.public1.id
   key_name      = var.key_name
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
   associate_public_ip_address = true
+  user_data = file("nginx.sh")
 
   tags = { Name = "Bastion-server" }
 }
