@@ -1,4 +1,4 @@
-- hosts: nginx
+- hosts: bastion
   become: yes
   tasks:
     - name: Install Nginx
