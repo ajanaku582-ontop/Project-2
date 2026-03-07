@@ -1,0 +1,60 @@
+---
+- name: Install Nginx
+  hosts: nginx
+  become: true
+  tasks:
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+               
+    - name: Verify Nginx is running
+      service:  
+        name: nginx
+        state: started
+        enabled: yes
+      register: nginx_status
+    - name: Print Nginx status
+      debug:
+        msg: "Nginx status: {{ nginx_status }}"
+    - name: Install Nginx and setup landing page
+      shell: |
+                # Create custom landing page
+                sudo mkdir -p /var/www/html/custom
+                sudo echo "<h1>Welcome to Custom Nginx Page</h1>" > /var/www/html/custom/index.html
+                
+                # Start Nginx
+                sudo systemctl daemon-reload
+                sudo systemctl start nginx
+                sudo systemctl enable nginx
+
+                # Check if Nginx is running
+                sudo systemctl status nginx
+                
+                echo "Nginx installation completed!"
+
+- name: Install Java
+  hosts: java
+  become: true
+  tasks:
+    - name: Install Java 17
+      yum:
+        name: java-17-amazon-corretto
+        update_cache: yes
+    - name: Install Python 3 and pip
+      yum:
+        name: 
+          - python3
+          - python3-pip
+        update_cache: yes
+    - name: Create virtual environment and install Flask
+      shell: |
+        python3 -m venv /opt/venv
+        source /opt/venv/bin/activate && pip install flask
+        state: present

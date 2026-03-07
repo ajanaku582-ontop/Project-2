@@ -1,0 +1,5 @@
+---
+update_packages: true
+disable_root_login: true
+ssh_port: 22
+firewall_enabled: true

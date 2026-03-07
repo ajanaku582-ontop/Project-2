@@ -1,0 +1,16 @@
+- name: Install python
+  yum:
+    name: python3
+    state: present
+
+- name: Install pip packages
+  pip:
+    requirements: /home/ec2-user/app/requirements.txt
+
+- name: Copy app
+  copy:
+    src: ../../app/
+    dest: /home/ec2-user/app/
+
+- name: Run app
+  shell: nohup python3 /home/ec2-user/app/main.py &

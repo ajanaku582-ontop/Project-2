@@ -1,0 +1,6 @@
+---
+- name: OS Hardening for EC2 instances
+  hosts: all
+  become: true
+  roles:
+    - os-hardening

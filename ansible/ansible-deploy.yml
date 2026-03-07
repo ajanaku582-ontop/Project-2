@@ -1,0 +1,26 @@
+- hosts: app
+  become: yes
+
+  tasks:
+    - name: Install python
+      yum:
+        name: python3
+        state: present
+
+    - name: Install app deps
+      pip:
+        name:
+          - fastapi
+          - uvicorn
+          - psycopg2-binary
+
+    - name: Copy app
+      copy:
+        src: ../app/
+        dest: /home/ec2-user/app/
+
+    - name: Run app
+      shell: |
+        nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
+      args:
+        chdir: /home/ec2-user/app
