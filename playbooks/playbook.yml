@@ -1,5 +1,5 @@
 - hosts: bastion
-  become: yes
+  become: true
   tasks:
     - name: Install Nginx
       yum:
@@ -16,7 +16,7 @@
         dest: /usr/share/nginx/html/index.html
 
 - hosts: app
-  become: yes
+  become: true
   tasks:
     - name: Install Python3 & pip
       yum:

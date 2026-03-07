@@ -1,6 +1,15 @@
 ---
-- name: OS Hardening for EC2 instances
-  hosts: all
-  become: true
-  roles:
-    - os-hardening
+# - name: OS Hardening for EC2 instances
+#   hosts: all
+#   become: true
+#   roles:
+#     - os-hardening
+
+- name: Install Ansible roles
+  run: ansible-galaxy install -r ansible/requirements.yml
+
+- name: Run Playbook
+  run: ansible-playbook -i inventory.ini ansible/ansible-playbook.yml
+  env:
+    ANSIBLE_HOST_KEY_CHECKING: 'False'
+    
