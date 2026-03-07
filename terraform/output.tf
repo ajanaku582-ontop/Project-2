@@ -1,5 +1,5 @@
 # output "nginx_node_ip" {
-#   value = aws_instance.nginx.public_ip
+# value = aws_instance.nginx.public_ip
 # }
 
 output "app_node_ip" {
