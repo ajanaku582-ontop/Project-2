@@ -6,8 +6,13 @@
 
   tasks:
 
-    - name: Ensure python3-apt exists
-      raw: python 
+    - name: Check python3 version
+      raw: python3 --version
+      register: python_test
+
+    - name: Display python version
+      debug:
+        msg: "Python version is {{ python_test.stdout }}"
 
     - name: Update apt packages
       apt:
