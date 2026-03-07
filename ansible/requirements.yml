@@ -1,0 +1,7 @@
+# ansible/requirements.yml
+roles:
+  - name: dev-sec.os-hardening
+    src: geerlingguy.os_hardening
+    version: 3.0.0    
+
+    
