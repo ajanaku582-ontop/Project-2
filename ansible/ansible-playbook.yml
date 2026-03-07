@@ -14,13 +14,17 @@
       debug:
         msg: "Python version is {{ python_test.stdout }}"
 
-    # - name: Update apt packages
-    #   apt:
-    #     update_cache: yes
+    - name: Update apt packages
+      apt:
+        update_cache: yes
 
-    - name: Install python3-apt dependency
-      raw: sudo apt-get update && sudo apt-get install -y python3-apt
-
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - git
+          - curl
+        state: present
     - name: Install required packages
       apt:
         name:
