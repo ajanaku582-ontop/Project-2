@@ -1,7 +1,25 @@
 
-- name: Install Ansible
-  run: pip install ansible
+---
+- name: Configure EC2 Servers
+  hosts: all
+  become: true
 
-- name: Install Ansible roles
-  run: ansible-galaxy install -r ansible/requirements.yml
+  tasks:
 
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - git
+          - curl
+        state: present
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
