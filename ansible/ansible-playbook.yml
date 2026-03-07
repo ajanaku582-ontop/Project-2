@@ -5,7 +5,3 @@
 - name: Install Ansible roles
   run: ansible-galaxy install -r ansible/requirements.yml
 
-- name: Run Playbook
-  run: ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
-  env:
-    ANSIBLE_HOST_KEY_CHECKING: "False"
