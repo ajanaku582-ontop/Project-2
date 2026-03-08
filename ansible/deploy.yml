@@ -54,9 +54,9 @@ jobs:
     - name: Test SSH Connectivity
       run: |
         cd ansible
-        ansible bastion -i inventory.ini -m ping
-        ansible app -i inventory.ini -m ping
-        ansible postgres -i inventory.ini -m ping
+        ansible bastion -i ../terraform/inventory.ini -m ping
+        ansible app -i ../terraform/inventory.ini -m ping
+        ansible postgres -i ../terraform/inventory.ini -m ping
 
     - name: Run Ansible Playbook
       run: |

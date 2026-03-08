@@ -143,11 +143,16 @@ jobs:
       #   with:
       #     python-version: '3.11'
 
-      # Run Ansible OS Hardening
-      - name: Run Ansible OS Hardening
-        run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
+      # # Run Ansible OS Hardening
+      # - name: Run Ansible OS Hardening
+      #   run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i terraform/inventory.ini ansible/ansible-playbook.yml
 
       # Deploy Application
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible
+
       - name: Run Ansible Deploy
-        run: ANSIBLE_HOST_KEY_CHECKING=False \
-             ansible-playbook -i terraform/inventory.ini ansible/deploy.yml
+        run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i terraform/inventory.ini ansible/deploy.yml
