@@ -28,11 +28,19 @@
     - name: Print Nginx status
       debug:
         msg: "Nginx status: {{ nginx_status }}"
+
+    - name: Create custom nginx page
+      copy:
+      content: "<h1>Welcome to Custom Nginx Page</h1>"
+      dest: /var/www/html/index.html
+
+    - name: Deploy index.html
+      copy:
+        src: ../user_data/index.html
+        dest: /var/www/html/index.html
+        
     - name: Install Nginx and setup landing page
       shell: |
-                # Create custom landing page
-                sudo mkdir -p /var/www/html/custom
-                sudo echo "<h1>Welcome to Custom Nginx Page</h1>" > /var/www/html/custom/index.html
                 
                 # Start Nginx
                 sudo systemctl daemon-reload
@@ -60,14 +68,14 @@
         update_cache: yes
 
     - name: Create virtual environment
-      command: python3 -m venv /opt/venv
+      command: python3 -m venv /opt/appenv
 
     - name: Install Flask
       pip:
         name: flask
-        virtualenv: /opt/venv
-    
+        virtualenv: /opt/appenv
+
     - name: Install Python dependencies
       pip:
-      requirements: /opt/app/requirements.txt
-      virtualenv: /opt/appenv
+        requirements: /opt/app/requirements.txt
+        virtualenv: /opt/appenv
