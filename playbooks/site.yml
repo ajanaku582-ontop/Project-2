@@ -66,3 +66,8 @@
       pip:
         name: flask
         virtualenv: /opt/venv
+    
+    - name: Install Python dependencies
+      pip:
+      requirements: /opt/app/requirements.txt
+      virtualenv: /opt/appenv
