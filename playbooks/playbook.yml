@@ -25,7 +25,8 @@
         src: ../user_data/index.html
         dest: /usr/share/nginx/html/index.html
 
-- hosts: app
+- name: Application Deployment
+  hosts: app
   become: true
   tasks:
     - name: Install Python3 & pip
