@@ -155,4 +155,4 @@ jobs:
           pip install ansible
 
       - name: Run Ansible Deploy
-        run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i terraform/inventory.ini ansible/deploy.yml
+        run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i terraform/inventory.ini playbooks/playbook.yml

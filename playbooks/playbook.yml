@@ -1,17 +1,23 @@
-- hosts: bastion
+---
+- name: Ansible Deployment
+  hosts: all
   become: true
   tasks:
     - name: Install Nginx
       yum:
         name: nginx
         state: present
+    - name: Install Git
+      yum:
+        name: git
+        state: present
+    - name: Install Curl
+      yum:
+        name: curl
+        state: present
     - name: Start Nginx
       service:
-        name: 
-              - nginx
-              - git
-              - curl
-
+        name: nginx
         state: started
         enabled: true
     - name: Deploy index.html
@@ -19,7 +25,8 @@
         src: ../user_data/index.html
         dest: /usr/share/nginx/html/index.html
 
-- hosts: app
+- name: Application Deployment
+  hosts: app
   become: true
   tasks:
     - name: Install Python3 & pip
