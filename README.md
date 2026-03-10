@@ -21,15 +21,47 @@ Security Groups and IAM roles (including SSM role for Session Manager)
 
 Ansible handles OS hardening and deployment of application and Nginx configuration.terraform/
 
-├── main.tf
-├── variables.tf
-├── outputs.tf
-├── inventory.ini
-ansible/
-├── playbook.yml
-├── roles/
-│   └── os-hardening/
-│       ├── tasks/
-│       │   └── main.yml
-│       └── defaults/
-│           └── main.yml
+STRUCTURAL ARCHITECTURE
+
+├project/
+│
+├── terraform/
+│   ├── main.tf
+│   ├── vpc.tf
+│   ├── ec2.tf
+│   ├── rds.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── inventory.tpl
+│   └── terraform.tfvars
+│
+├── ansible/
+│   ├── deploy.yml
+│   └── ansible.cfg
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+│
+└── README.md
+
+FINAL ARCHITECTURE
+
+                GitHub Actions
+                      │
+                      ▼
+               Terraform Apply
+                      │
+                      ▼
+                AWS Infrastructure
+                      │
+        ┌─────────────┴─────────────┐
+        ▼                           ▼
+   Bastion Server              Private App Server
+  (Public Subnet)               (Private Subnet)
+        │                           │
+        │ SSH Jump                  │
+        └──────────────►────────────┘
+                      │
+                      ▼
+                  PostgreSQL RDS
