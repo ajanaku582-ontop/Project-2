@@ -1,6 +1,6 @@
 ---
 - name: Configure EC2 Servers
-  hosts: bastion
+  hosts: app
   become: true
 
   tasks:
